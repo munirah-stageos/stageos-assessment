@@ -153,6 +153,82 @@ Any failure → escalated to human review
 
 ---
 
+## Data Model
+
+How the core entities connect within stageOS:
+
+```
+┌─────────────────┐         ┌─────────────────┐
+│     EVENT       │         │     VENDOR       │
+│─────────────────│         │─────────────────│
+│ id              │         │ id               │
+│ name            │         │ name             │
+│ date            │         │ category         │
+│ location        │         │ kyc_status       │
+│ budget          │         │ risk_score       │
+│ status          │         │ stagepay_active  │
+└────────┬────────┘         └────────┬─────────┘
+         │                           │
+         │  EVENT has many VENDORS   │
+         └───────────┬───────────────┘
+                     │
+                     ▼
+          ┌─────────────────┐
+          │     INVOICE     │
+          │─────────────────│
+          │ id              │
+          │ event_id        │
+          │ vendor_id       │
+          │ amount          │
+          │ status          │
+          │ po_reference    │
+          └────────┬────────┘
+                   │
+                   │  INVOICE triggers STAGEPAY REQUEST
+                   ▼
+          ┌─────────────────┐         ┌─────────────────┐
+          │ STAGEPAY REQUEST│         │ APPROVAL         │
+          │─────────────────│         │─────────────────│
+          │ id              │────────▶│ id               │
+          │ invoice_id      │         │ request_id       │
+          │ advance_amount  │         │ approver         │
+          │ ai_score        │         │ decision         │
+          │ status          │         │ timestamp        │
+          │ nylon_ref       │         └─────────────────┘
+          └─────────────────┘
+
+KEY RELATIONSHIPS:
+· One Event → Many Vendors (via event_vendor join)
+· One Vendor → Many Invoices
+· One Invoice → One stagePay Request
+· One stagePay Request → One Approval (if above threshold)
+· All entities → Audit Log (every state change recorded)
+```
+
+---
+
+## Operational Resilience
+
+How the system handles failures and edge cases:
+
+| Failure Scenario | System Response | Human Involved? |
+|-----------------|-----------------|-----------------|
+| AI validation fails (inconclusive) | Escalate to Finance Agent → human review | Yes |
+| Nylon Finance API timeout | Retry 3x with exponential backoff → alert operations team | Yes if unresolved |
+| KYC provider unavailable | Flag vendor as pending · block stagePay until resolved | Yes |
+| Duplicate invoice detected | Auto-reject · log to audit trail · alert Finance Agent | No |
+| Fraud pattern detected | Freeze vendor account immediately · alert human within 5 min | Mandatory |
+| Approval queue overload | Prioritise by risk level · alert operations · extend SLA | Yes |
+| Data loss / system outage | All transactions logged before processing · recoverable from audit trail | Yes |
+
+**Core resilience principles applied:**
+- Every state change is written to the audit log before execution
+- No financial action is irreversible without a human confirmation trail
+- AI agents degrade gracefully — if an agent fails, it escalates rather than proceeding
+- All decisions are explainable and traceable to source data
+
+---
+
 ## AI Usage Disclosure
 
 | Area | AI Tool Used | Human Judgment Applied |
