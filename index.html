@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>stageOS — Autonomous Systems Assessment</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: #070C09; color: #D4E8DB; font-size: 13px; }
+    #app { display: flex; height: 100vh; overflow: hidden; }
+
+    /* ── Sidebar ── */
+    .sidebar { width: 210px; min-width: 210px; background: #0B110D; border-right: 1px solid #1A2B1F; display: flex; flex-direction: column; padding: 16px 0; }
+    .logo { padding: 4px 16px 20px; display: flex; align-items: center; gap: 9px; }
+    .logo-mark { width: 30px; height: 30px; background: #00C896; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #070C09; }
+    .logo-text { font-size: 15px; font-weight: 600; color: #E8F5EE; letter-spacing: -0.3px; }
+    .logo-sub { font-size: 9px; color: #3A5044; letter-spacing: 0.5px; display: block; }
+    .nav-section { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; color: #3A5044; padding: 12px 16px 4px; text-transform: uppercase; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; cursor: pointer; color: #6B8F78; font-size: 12.5px; font-weight: 500; transition: all 0.15s; border-left: 2px solid transparent; user-select: none; }
+    .nav-item:hover { color: #B8D4C4; background: #0F1A12; }
+    .nav-item.active { color: #00C896; background: #0A1F14; border-left-color: #00C896; }
+    .nav-icon { font-size: 14px; width: 18px; text-align: center; }
+    .sidebar-footer { margin-top: auto; padding: 12px 16px; border-top: 1px solid #1A2B1F; font-size: 10px; color: #3A5044; }
+
+    /* ── Main ── */
+    .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: #070C09; }
+    .topbar { padding: 14px 24px; border-bottom: 1px solid #1A2B1F; display: flex; align-items: center; justify-content: space-between; background: #070C09; position: sticky; top: 0; z-index: 10; }
+    .page-title { font-size: 15px; font-weight: 600; color: #E8F5EE; }
+    .page-sub { font-size: 11px; color: #4A6A58; margin-top: 1px; }
+    .content { padding: 18px 24px; flex: 1; }
+
+    /* ── Cards ── */
+    .card { background: #0B110D; border: 1px solid #1A2B1F; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+    .card-title { font-size: 12px; font-weight: 600; color: #A0C4B0; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+    /* ── Stats ── */
+    .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 14px; }
+    .stat-card { background: #0B110D; border: 1px solid #1A2B1F; border-radius: 10px; padding: 14px; }
+    .stat-label { font-size: 10.5px; color: #4A6A58; font-weight: 500; margin-bottom: 6px; }
+    .stat-val { font-size: 22px; font-weight: 600; color: #E8F5EE; line-height: 1; }
+    .stat-change { font-size: 10.5px; color: #00C896; margin-top: 5px; }
+    .stat-change.neg { color: #FF6B5B; }
+
+    /* ── Grid ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── Table ── */
+    .table { width: 100%; border-collapse: collapse; }
+    .table th { font-size: 10px; font-weight: 600; color: #3A5044; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px; text-align: left; border-bottom: 1px solid #1A2B1F; }
+    .table td { padding: 9px 10px; font-size: 12px; color: #8FB09E; border-bottom: 1px solid #0F1A12; vertical-align: middle; }
+    .table tr:last-child td { border-bottom: none; }
+    .table tr:hover td { background: #0D1710; }
+
+    /* ── Badges ── */
+    .badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 20px; font-size: 10.5px; font-weight: 500; white-space: nowrap; }
+    .badge-green  { background: #0A2E1C; color: #00C896; }
+    .badge-yellow { background: #2A2010; color: #F0B429; }
+    .badge-red    { background: #2E100A; color: #FF6B5B; }
+    .badge-blue   { background: #0A1A2E; color: #60A5FA; }
+    .badge-gray   { background: #151F18; color: #6B8F78; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 5px; padding: 6px 13px; border-radius: 7px; font-size: 12px; font-weight: 500; cursor: pointer; border: none; font-family: inherit; transition: all 0.15s; }
+    .btn-primary { background: #00C896; color: #070C09; }
+    .btn-primary:hover { background: #00E8AD; }
+    .btn-primary:disabled { background: #1A3A2A; color: #3A5044; cursor: default; }
+    .btn-ghost { background: transparent; color: #6B8F78; border: 1px solid #1A2B1F; }
+    .btn-ghost:hover { background: #0F1A12; color: #B8D4C4; }
+    .btn-ghost:disabled { opacity: 0.4; cursor: default; }
+    .btn-danger { background: transparent; color: #FF6B5B; border: 1px solid #2E100A; }
+    .btn-danger:hover { background: #2E100A; }
+    .btn-sm { padding: 4px 9px; font-size: 11px; }
+
+    /* ── AI Alerts ── */
+    .ai-alert { background: #0A1F14; border: 1px solid #1A3A24; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; }
+    .ai-alert:last-child { margin-bottom: 0; }
+    .ai-dot { width: 7px; height: 7px; border-radius: 50%; background: #00C896; margin-top: 4px; flex-shrink: 0; }
+    .ai-dot.warn { background: #F0B429; }
+    .ai-dot.risk { background: #FF6B5B; }
+    .ai-alert-title { font-size: 12px; font-weight: 600; color: #C8E8D8; margin-bottom: 2px; }
+    .ai-alert-text  { font-size: 11px; color: #5A7A68; line-height: 1.5; }
+
+    /* ── Progress ── */
+    .progress-row { margin-bottom: 8px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 3px; color: #6B8F78; }
+    .progress-label span:last-child { color: #C8E8D8; }
+    .progress-bar { height: 4px; background: #1A2B1F; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 2px; background: #00C896; transition: width 0.6s ease; }
+    .progress-fill.warn { background: #F0B429; }
+
+    /* ── Workflow Steps ── */
+    .workflow-step { display: flex; align-items: flex-start; gap: 12px; padding: 11px 0; border-bottom: 1px solid #0F1A12; }
+    .workflow-step:last-child { border-bottom: none; }
+    .step-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; flex-shrink: 0; transition: all 0.3s; }
+    .step-done    { background: #00C896; color: #070C09; }
+    .step-active  { background: #F0B429; color: #070C09; }
+    .step-pending { background: #1A2B1F; color: #3A5044; }
+    .step-title   { font-size: 12px; font-weight: 600; color: #C8E8D8; margin-bottom: 2px; }
+    .step-desc    { font-size: 11px; color: #4A6A58; line-height: 1.4; }
+    .step-time    { font-size: 10px; color: #3A5044; margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+    /* ── Vendor score bars ── */
+    .score-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    .score-label { font-size: 11px; color: #6B8F78; width: 90px; flex-shrink: 0; }
+    .score-bar { flex: 1; height: 5px; background: #1A2B1F; border-radius: 3px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 3px; }
+    .score-val { font-size: 11px; color: #C8E8D8; width: 30px; text-align: right; }
+
+    /* ── Agent cards ── */
+    .agent-card { background: #0D1710; border: 1px solid #1A2B1F; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+    .agent-header { display: flex; align-items: center; gap: 9px; margin-bottom: 7px; }
+    .agent-icon { width: 30px; height: 30px; border-radius: 7px; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .agent-name   { font-size: 12px; font-weight: 600; color: #C8E8D8; }
+    .agent-status { font-size: 10px; color: #3A5044; margin-top: 1px; }
+    .agent-tasks  { font-size: 11px; color: #5A7A68; line-height: 1.7; }
+
+    /* ── Mini chart ── */
+    .mini-chart { display: flex; align-items: flex-end; gap: 3px; height: 44px; }
+    .bar { border-radius: 2px 2px 0 0; background: #1A3A24; flex: 1; min-width: 8px; }
+    .bar.hi { background: #00C896; }
+
+    /* ── Pulse animation ── */
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .pulse { animation: pulse 2s infinite; }
+
+    /* ── Log entries ── */
+    .log-entry { padding: 6px 0; border-bottom: 1px solid #0F1A12; font-size: 11px; font-family: 'DM Mono', monospace; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry.ok { color: #00C896; }
+    .log-entry.err { color: #FF6B5B; }
+
+    /* ── Finance box ── */
+    .finance-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 5px 0; border-bottom: 1px solid #0F1A12; }
+    .finance-row:last-child { border-bottom: none; }
+    .finance-row span:first-child { color: #4A6A58; }
+    .finance-row span:last-child  { color: #C8E8D8; font-family: 'DM Mono', monospace; }
+    .finance-total { color: #00C896 !important; font-weight: 600; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── SIDEBAR ─── -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      <div>
+        <div class="logo-text">stageOS</div>
+        <span class="logo-sub">Assessment Prototype</span>
+      </div>
+    </div>
+
+    <div class="nav-section">Platform</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">⊞</span> Dashboard
+    </div>
+    <div class="nav-item" data-page="events">
+      <span class="nav-icon">◈</span> Events
+    </div>
+    <div class="nav-item" data-page="vendors">
+      <span class="nav-icon">◎</span> Vendors
+    </div>
+
+    <div class="nav-section">Finance</div>
+    <div class="nav-item" data-page="stagepay">
+      <span class="nav-icon">⟁</span> stagePay
+    </div>
+    <div class="nav-item" data-page="approvals">
+      <span class="nav-icon">✓</span> Approvals
+      <span class="badge badge-red" style="margin-left:auto;padding:1px 6px;font-size:9px;">3</span>
+    </div>
+
+    <div class="nav-section">Intelligence</div>
+    <div class="nav-item" data-page="agents">
+      <span class="nav-icon">◈</span> AI Agents
+    </div>
+    <div class="nav-item" data-page="insights">
+      <span class="nav-icon">↗</span> Insights & Risk
+    </div>
+
+    <div class="sidebar-footer">
+      stageOS · KSA Region · v1.0<br>
+      Built: May 2026 — Munirah Assessment
+    </div>
+  </nav>
+
+  <!-- ─── MAIN ─── -->
+  <div class="main">
+
+    <!-- ═══════════ DASHBOARD ═══════════ -->
+    <div id="page-dashboard" class="page">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Operations Dashboard</div>
+          <div class="page-sub">Live overview · KSA Region · May 26, 2026</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="goPage('events')">+ New Event</button>
+      </div>
+      <div class="content">
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-label">Active Events</div>
+            <div class="stat-val">4</div>
+            <div class="stat-change">↑ 2 added this month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Registered Vendors</div>
+            <div class="stat-val">23</div>
+            <div class="stat-change">↑ 5 new since last week</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">stagePay Advanced</div>
+            <div class="stat-val">SAR 1.2M</div>
+            <div class="stat-change">↑ 34% vs last month</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Pending Approvals</div>
+            <div class="stat-val">3</div>
+            <div class="stat-change neg">⚠ Needs attention</div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Active Events <span class="badge badge-green pulse">● Live</span></div>
+            <table class="table">
+              <thead><tr><th>Event</th><th>Date</th><th>Vendors</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Safira Evening Riyadh</td><td>Jun 12</td><td>8</td><td><span class="badge badge-green">Active</span></td></tr>
+                <tr><td>LEAP 2026 Side Event</td><td>Jun 20</td><td>12</td><td><span class="badge badge-yellow">Setup</span></td></tr>
+                <tr><td>Vision 2030 Summit</td><td>Jul 4</td><td>6</td><td><span class="badge badge-blue">Planning</span></td></tr>
+                <tr><td>GITEX KSA Side Event</td><td>Jul 18</td><td>4</td><td><span class="badge badge-gray">Draft</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="card">
+            <div class="card-title">AI Recommendations</div>
+            <div class="ai-alert">
+              <div class="ai-dot risk pulse"></div>
+              <div>
+                <div class="ai-alert-title">HIGH RISK — Al-Nour Catering</div>
+                <div class="ai-alert-text">Invoice due in 18 hours. Vendor has history of slow mobilisation without pre-financing. stagePay advance strongly recommended.</div>
+              </div>
+            </div>
+            <div class="ai-alert">
+              <div class="ai-dot warn pulse"></div>
+              <div>
+                <div class="ai-alert-title">Vendor Gap — LEAP Event</div>
+                <div class="ai-alert-text">No security vendor confirmed. 3 verified alternatives available in stagePassport CRM. Auto-outreach ready.</div>
+              </div>
+            </div>
+            <div class="ai-alert">
+              <div class="ai-dot pulse"></div>
+              <div>
+                <div class="ai-alert-title">stagePay Ready — Al-Baraka</div>
+                <div class="ai-alert-text">KYC passed. SAR 85,200 advance approved and ready to disburse.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-title">Payment Pipeline</div>
+            <div class="progress-row">
+              <div class="progress-label"><span>Invoices Submitted</span><span>18</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+            </div>
+            <div class="progress-row">
+              <div class="progress-label"><span>stagePay Advanced</span><span>11</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:61%"></div></div>
+            </div>
+            <div class="progress-row">
+              <div class="progress-label"><span>Buyer Settled</span><span>7</span></div>
+              <div class="progress-bar"><div class="progress-fill warn" style="width:39%"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Vendor Health Index</div>
+            <div class="score-row"><span class="score-label">KYC Verified</span><div class="score-bar"><div class="score-fill" style="width:87%;background:#00C896"></div></div><span class="score-val">87%</span></div>
+            <div class="score-row"><span class="score-label">On-Time Rate</span><div class="score-bar"><div class="score-fill" style="width:74%;background:#F0B429"></div></div><span class="score-val">74%</span></div>
+            <div class="score-row"><span class="score-label">Low Risk</span><div class="score-bar"><div class="score-fill" style="width:91%;background:#00C896"></div></div><span class="score-val">91%</span></div>
+            <div class="score-row"><span class="score-label">PDPL Compliant</span><div class="score-bar"><div class="score-fill" style="width:100%;background:#00C896"></div></div><span class="score-val">100%</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Monthly Advances (SAR)</div>
+            <div class="mini-chart">
+              <div class="bar" style="height:28%"></div>
+              <div class="bar" style="height:52%"></div>
+              <div class="bar" style="height:38%"></div>
+              <div class="bar" style="height:65%"></div>
+              <div class="bar" style="height:48%"></div>
+              <div class="bar hi" style="height:100%"></div>
+            </div>
+            <div style="font-size:10px;color:#3A5044;margin-top:6px;font-family:'DM Mono',monospace">Jan → Jun 2026 · Peak: SAR 1.2M</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ EVENTS ═══════════ -->
+    <div id="page-events" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Event Management</div>
+          <div class="page-sub">4 active events · Full lifecycle management</div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="addEvent()">+ Create Event</button>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">All Events</div>
+          <table class="table">
+            <thead><tr><th>Event Name</th><th>Date</th><th>Location</th><th>Vendors</th><th>Budget (SAR)</th><th>Guests</th><th>Status</th><th></th></tr></thead>
+            <tbody id="events-body">
+              <tr><td>Safira Evening Riyadh</td><td>Jun 12, 2026</td><td>Four Seasons Riyadh</td><td>8</td><td>480,000</td><td>318</td><td><span class="badge badge-green">Active</span></td><td><button class="btn btn-ghost btn-sm" onclick="showEventDetail('Safira Evening Riyadh','Jun 12','Four Seasons Riyadh',318,480000,8,'Active')">Detail</button></td></tr>
+              <tr><td>LEAP 2026 Side Event</td><td>Jun 20, 2026</td><td>KAEC, Jeddah</td><td>12</td><td>1,200,000</td><td>540</td><td><span class="badge badge-yellow">Setup</span></td><td><button class="btn btn-ghost btn-sm" onclick="showEventDetail('LEAP 2026 Side Event','Jun 20','KAEC',540,1200000,12,'Setup')">Detail</button></td></tr>
+              <tr><td>Vision 2030 Summit</td><td>Jul 4, 2026</td><td>King Fahd Cultural Centre</td><td>6</td><td>750,000</td><td>220</td><td><span class="badge badge-blue">Planning</span></td><td><button class="btn btn-ghost btn-sm" onclick="showEventDetail('Vision 2030 Summit','Jul 4','KFCC Riyadh',220,750000,6,'Planning')">Detail</button></td></tr>
+              <tr><td>GITEX KSA Side Event</td><td>Jul 18, 2026</td><td>Riyadh Front</td><td>4</td><td>320,000</td><td>180</td><td><span class="badge badge-gray">Draft</span></td><td><button class="btn btn-ghost btn-sm" onclick="showEventDetail('GITEX KSA','Jul 18','Riyadh Front',180,320000,4,'Draft')">Detail</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="event-detail-card" class="card" style="display:none">
+          <div class="card-title" id="event-detail-title">—</div>
+          <div class="grid-3" id="event-detail-stats"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ VENDORS ═══════════ -->
+    <div id="page-vendors" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Vendor Operations</div>
+          <div class="page-sub">23 vendors · 4 KYC pending · PDPL compliant</div>
+        </div>
+        <button class="btn btn-primary btn-sm">+ Add Vendor</button>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">Vendor Registry — AI Scored</div>
+          <table class="table">
+            <thead><tr><th>Vendor</th><th>Category</th><th>KYC</th><th>Risk Score</th><th>Outstanding (SAR)</th><th>stagePay</th><th>Rating</th></tr></thead>
+            <tbody>
+              <tr><td><strong style="color:#C8E8D8">Al-Baraka Productions</strong></td><td>AV & Production</td><td><span class="badge badge-green">✓ Verified</span></td><td><span style="color:#00C896;font-family:'DM Mono',monospace">92/100</span></td><td>142,000</td><td><span class="badge badge-green">Active</span></td><td style="color:#F0B429">★★★★★</td></tr>
+              <tr><td><strong style="color:#C8E8D8">Al-Nour Catering</strong></td><td>Catering & F&B</td><td><span class="badge badge-green">✓ Verified</span></td><td><span style="color:#F0B429;font-family:'DM Mono',monospace">67/100</span></td><td>85,000</td><td><span class="badge badge-yellow">Pending</span></td><td style="color:#F0B429">★★★★☆</td></tr>
+              <tr><td><strong style="color:#C8E8D8">SafeGuard Security</strong></td><td>Security Services</td><td><span class="badge badge-yellow">⟳ In Review</span></td><td><span style="color:#6B8F78;font-family:'DM Mono',monospace">—</span></td><td>48,000</td><td><span class="badge badge-gray">Not Active</span></td><td style="color:#F0B429">★★★☆☆</td></tr>
+              <tr><td><strong style="color:#C8E8D8">Riyadh Logistics Co.</strong></td><td>Logistics & Transport</td><td><span class="badge badge-green">✓ Verified</span></td><td><span style="color:#00C896;font-family:'DM Mono',monospace">88/100</span></td><td>62,000</td><td><span class="badge badge-green">Active</span></td><td style="color:#F0B429">★★★★★</td></tr>
+              <tr><td><strong style="color:#C8E8D8">Elite Décor Studio</strong></td><td>Décor & Design</td><td><span class="badge badge-red">✗ Failed</span></td><td><span style="color:#FF6B5B;font-family:'DM Mono',monospace">34/100</span></td><td>31,000</td><td><span class="badge badge-red">Blocked</span></td><td style="color:#F0B429">★★☆☆☆</td></tr>
+              <tr><td><strong style="color:#C8E8D8">MediaPro KSA</strong></td><td>Photography & Media</td><td><span class="badge badge-green">✓ Verified</span></td><td><span style="color:#00C896;font-family:'DM Mono',monospace">95/100</span></td><td>27,000</td><td><span class="badge badge-green">Active</span></td><td style="color:#F0B429">★★★★★</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Vendor Intelligence — AI Note</div>
+            <div class="ai-alert">
+              <div class="ai-dot risk"></div>
+              <div>
+                <div class="ai-alert-title">Elite Décor Studio — Fraud Pattern Detected</div>
+                <div class="ai-alert-text">KYC failed: inconsistent company registration data. Invoice amounts do not match market rates. Account frozen pending human review.</div>
+              </div>
+            </div>
+            <div class="ai-alert">
+              <div class="ai-dot warn"></div>
+              <div>
+                <div class="ai-alert-title">Al-Nour Catering — Cash Flow Risk</div>
+                <div class="ai-alert-text">Score 67/100. Recommend stagePay advance before event date to ensure timely mobilisation.</div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">KYC Pipeline Status</div>
+            <div class="progress-row">
+              <div class="progress-label"><span>Fully Verified</span><span>19 vendors</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:83%"></div></div>
+            </div>
+            <div class="progress-row">
+              <div class="progress-label"><span>In Review</span><span>2 vendors</span></div>
+              <div class="progress-bar"><div class="progress-fill warn" style="width:9%"></div></div>
+            </div>
+            <div class="progress-row">
+              <div class="progress-label"><span>Failed / Blocked</span><span>2 vendors</span></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:9%;background:#FF6B5B"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ STAGEPAY ═══════════ -->
+    <div id="page-stagepay" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">stagePay — Financing Workflow</div>
+          <div class="page-sub">AI-validated vendor advances · Powered by Nylon Finance</div>
+        </div>
+        <span class="badge badge-green pulse">● System Live</span>
+      </div>
+      <div class="content">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">
+              Active Request: Al-Nour Catering
+              <button class="btn btn-primary btn-sm" id="step-btn" onclick="advanceStep()">▶ Advance</button>
+            </div>
+            <div id="steps-container">
+              <!-- steps injected by JS -->
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="card">
+              <div class="card-title">AI Validation Results</div>
+              <div id="validation-results">
+                <div class="finance-row"><span>Contract Authenticity</span><span style="color:#00C896">✓ Verified</span></div>
+                <div class="finance-row"><span>Buyer Credibility</span><span style="color:#00C896">✓ High (Score 91)</span></div>
+                <div class="finance-row"><span>Operational Risk</span><span id="val-risk" style="color:#F0B429">⟳ Checking...</span></div>
+                <div class="finance-row"><span>Vendor Profile</span><span id="val-vendor" style="color:#F0B429">⟳ Checking...</span></div>
+              </div>
+              <div id="ai-verdict" style="display:none;margin-top:10px;padding:10px;background:#0A2E1C;border-radius:7px;text-align:center;color:#00C896;font-weight:600;font-size:12px;">
+                ✓ AI Approved — Route to Nylon Finance
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Finance Summary</div>
+              <div class="finance-row"><span>Invoice Total</span><span>SAR 142,000</span></div>
+              <div class="finance-row"><span>Advance Request (60%)</span><span class="finance-total">SAR 85,200</span></div>
+              <div class="finance-row"><span>Financing Fee (Nylon)</span><span>2.4% flat</span></div>
+              <div class="finance-row"><span>Disbursement ETA</span><span>~22 minutes</span></div>
+              <div class="finance-row"><span>Buyer Settlement</span><span>Post-event (Jun 13)</span></div>
+              <div class="finance-row"><span>Financing Partner</span><span>Nylon Finance (Licensed)</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ APPROVALS ═══════════ -->
+    <div id="page-approvals" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Approval Workflows</div>
+          <div class="page-sub">Human-in-the-loop governance · 3 pending</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="card">
+          <div class="card-title">Pending Approvals — Routed by AI Agents</div>
+          <table class="table" id="approvals-table">
+            <thead><tr><th>Request</th><th>Type</th><th>Amount (SAR)</th><th>Routed By</th><th>Priority</th><th>Action</th></tr></thead>
+            <tbody>
+              <tr id="apr-1">
+                <td>stagePay — Al-Baraka Productions</td><td>Financing Advance</td><td>85,200</td><td>Finance Agent</td>
+                <td><span class="badge badge-red">Escalated</span></td>
+                <td style="display:flex;gap:6px;padding:9px 10px;">
+                  <button class="btn btn-primary btn-sm" onclick="doApprove('apr-1','Al-Baraka Productions — stagePay SAR 85,200')">Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="doReject('apr-1','Al-Baraka Productions — stagePay')">Reject</button>
+                </td>
+              </tr>
+              <tr id="apr-2">
+                <td>New Vendor — SafeGuard Security</td><td>KYC Override</td><td>—</td><td>Vendor Intel Agent</td>
+                <td><span class="badge badge-yellow">High</span></td>
+                <td style="display:flex;gap:6px;padding:9px 10px;">
+                  <button class="btn btn-primary btn-sm" onclick="doApprove('apr-2','SafeGuard Security — KYC Override')">Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="doReject('apr-2','SafeGuard Security — KYC Override')">Reject</button>
+                </td>
+              </tr>
+              <tr id="apr-3">
+                <td>Budget Increase — LEAP Event</td><td>Budget Amendment</td><td>120,000</td><td>Operations Agent</td>
+                <td><span class="badge badge-blue">Medium</span></td>
+                <td style="display:flex;gap:6px;padding:9px 10px;">
+                  <button class="btn btn-primary btn-sm" onclick="doApprove('apr-3','LEAP Budget Increase — SAR 120,000')">Approve</button>
+                  <button class="btn btn-danger btn-sm" onclick="doReject('apr-3','LEAP Budget Increase')">Reject</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">Audit Log — This Session</div>
+          <div id="audit-log"><div style="font-size:11px;color:#3A5044;font-style:italic;">No actions taken yet.</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Governance Rules — What Requires Human Approval</div>
+          <table class="table">
+            <thead><tr><th>Scenario</th><th>AI Action</th><th>Human Required</th><th>Rationale</th></tr></thead>
+            <tbody>
+              <tr><td>stagePay &lt; SAR 50K, verified vendor</td><td>Full auto-approve</td><td><span class="badge badge-green">No</span></td><td>Low risk threshold</td></tr>
+              <tr><td>stagePay &gt; SAR 50K</td><td>Validate + route</td><td><span class="badge badge-yellow">Yes</span></td><td>Financial materiality</td></tr>
+              <tr><td>KYC Failed Vendor</td><td>Block + alert</td><td><span class="badge badge-yellow">Yes</span></td><td>Override needs human review</td></tr>
+              <tr><td>Fraud Risk Alert</td><td>Freeze account</td><td><span class="badge badge-red">Mandatory</span></td><td>Legal liability</td></tr>
+              <tr><td>Auto communications</td><td>Send directly</td><td><span class="badge badge-green">No</span></td><td>Low impact, templated</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ AI AGENTS ═══════════ -->
+    <div id="page-agents" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">AI Agent Framework</div>
+          <div class="page-sub">4 autonomous agents · Orchestrated by stageOS</div>
+        </div>
+        <span class="badge badge-green pulse">● All Agents Active</span>
+      </div>
+      <div class="content">
+        <div class="grid-2">
+          <div>
+            <div class="agent-card">
+              <div class="agent-header">
+                <div class="agent-icon" style="background:#0A2E1C">⚙</div>
+                <div>
+                  <div class="agent-name">Operations Agent</div>
+                  <div class="agent-status">● Active · Last run: 2 min ago</div>
+                </div>
+              </div>
+              <div class="agent-tasks">
+                · Monitoring 4 active events for scheduling conflicts<br>
+                · Detected missing security vendor for LEAP event<br>
+                · Escalated Al-Nour payment risk to Finance Agent<br>
+                · Dispatched 12 automated stakeholder comms today
+              </div>
+            </div>
+            <div class="agent-card">
+              <div class="agent-header">
+                <div class="agent-icon" style="background:#0A1A2E">₿</div>
+                <div>
+                  <div class="agent-name">Finance Agent</div>
+                  <div class="agent-status">● Active · 2 requests processing</div>
+                </div>
+              </div>
+              <div class="agent-tasks">
+                · Validated 3 invoices for stagePay eligibility<br>
+                · Routed SAR 85,200 advance to Nylon Finance<br>
+                · Flagged Elite Décor Studio for fraud review<br>
+                · Auto-reconciled 7 settled payments this week
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="agent-card">
+              <div class="agent-header">
+                <div class="agent-icon" style="background:#2A1A00">◎</div>
+                <div>
+                  <div class="agent-name">Vendor Intelligence Agent</div>
+                  <div class="agent-status">● Active · 4 KYC checks in queue</div>
+                </div>
+              </div>
+              <div class="agent-tasks">
+                · Running KYC on SafeGuard Security (in progress)<br>
+                · Scored 6 vendors on reliability and financial risk<br>
+                · Suggested 3 replacement vendors for LEAP gap<br>
+                · Sent onboarding comms to 2 new vendors today
+              </div>
+            </div>
+            <div class="agent-card">
+              <div class="agent-header">
+                <div class="agent-icon" style="background:#2E100A">⚠</div>
+                <div>
+                  <div class="agent-name">Insights & Risk Agent</div>
+                  <div class="agent-status">● Active · 1 alert fired · PDPL compliant</div>
+                </div>
+              </div>
+              <div class="agent-tasks">
+                · Flagged Elite Décor Studio: high fraud signal<br>
+                · Forecasting SAR 1.8M advance volume for June<br>
+                · No approval queue bottlenecks detected<br>
+                · All data handling verified within KSA jurisdiction
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Agent Orchestration — How They Work Together</div>
+          <div style="font-size:12px;color:#6B8F78;line-height:2;">
+            <span style="color:#C8E8D8">Ops Agent</span> detects vendor gap → alerts <span style="color:#C8E8D8">Vendor Agent</span> to find alternatives →
+            <span style="color:#C8E8D8">Vendor Agent</span> scores candidates → sends top 3 to human approver via <span style="color:#C8E8D8">Ops Agent</span><br>
+            <span style="color:#C8E8D8">Finance Agent</span> validates invoice → runs AI checks → if &gt;SAR 50K routes to human → on approval, disburses via Nylon Finance →
+            <span style="color:#C8E8D8">Insights Agent</span> logs outcome and updates vendor score
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ INSIGHTS ═══════════ -->
+    <div id="page-insights" class="page" style="display:none">
+      <div class="topbar">
+        <div>
+          <div class="page-title">Insights & Risk Intelligence</div>
+          <div class="page-sub">AI-powered analytics · PDPL compliant · KSA data residency</div>
+        </div>
+      </div>
+      <div class="content">
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-label">Deal Flow Facilitated</div><div class="stat-val">SAR 4.78M</div><div class="stat-change">↑ 3 events in 2025</div></div>
+          <div class="stat-card"><div class="stat-label">AI Match Success Rate</div><div class="stat-val">90%</div><div class="stat-change">↑ +6% above target</div></div>
+          <div class="stat-card"><div class="stat-label">Avg Advance Time</div><div class="stat-val">24 min</div><div class="stat-change">↓ 38% faster than manual</div></div>
+          <div class="stat-card"><div class="stat-label">Fraud Cases Prevented</div><div class="stat-val">2</div><div class="stat-change">SAR 79K protected</div></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Active Risk Alerts</div>
+          <div class="ai-alert">
+            <div class="ai-dot risk pulse"></div>
+            <div>
+              <div class="ai-alert-title">HIGH — Elite Décor Studio · Fraud Pattern</div>
+              <div class="ai-alert-text">KYC failed. Invoice amounts 340% above market benchmarks. Company registration data inconsistent with CR records. Account frozen. Exposure: SAR 31,000. Immediate human review required.</div>
+            </div>
+          </div>
+          <div class="ai-alert">
+            <div class="ai-dot warn pulse"></div>
+            <div>
+              <div class="ai-alert-title">MEDIUM — Al-Nour Catering · Cash Flow Risk</div>
+              <div class="ai-alert-text">Vendor risk score 67/100. Historical data shows 2 of last 3 events had late mobilisation without pre-financing. stagePay advance before Jun 10 recommended to ensure event readiness.</div>
+            </div>
+          </div>
+          <div class="ai-alert">
+            <div class="ai-dot pulse"></div>
+            <div>
+              <div class="ai-alert-title">INFO — LEAP Event · Vendor Gap</div>
+              <div class="ai-alert-text">Security slot unfilled. 3 verified vendors in stagePassport match event profile and dates. Auto-outreach campaign ready to deploy on human approval.</div>
+            </div>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Compliance & Data Governance</div>
+            <div class="finance-row"><span>Data Residency</span><span style="color:#00C896">✓ KSA Only</span></div>
+            <div class="finance-row"><span>PDPL Certification</span><span style="color:#00C896">✓ Active</span></div>
+            <div class="finance-row"><span>Consent Management</span><span style="color:#00C896">✓ Implemented</span></div>
+            <div class="finance-row"><span>Audit Trail</span><span style="color:#00C896">✓ Full coverage</span></div>
+            <div class="finance-row"><span>Data Encryption</span><span style="color:#00C896">✓ AES-256 at rest</span></div>
+          </div>
+          <div class="card">
+            <div class="card-title">Forecasts — June 2026</div>
+            <div class="finance-row"><span>Projected stagePay Volume</span><span>SAR 1.8M</span></div>
+            <div class="finance-row"><span>Events Pipeline</span><span>6 events</span></div>
+            <div class="finance-row"><span>New Vendor Onboarding</span><span>8 vendors</span></div>
+            <div class="finance-row"><span>AI Match Ops (est.)</span><span>540 connections</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end .main -->
+</div><!-- end #app -->
+
+<script>
+// ── Navigation ──
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => {
+    const page = item.dataset.page;
+    goPage(page);
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    item.classList.add('active');
+  });
+});
+
+function goPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  document.getElementById('page-' + page).style.display = 'flex';
+  document.getElementById('page-' + page).style.flexDirection = 'column';
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.dataset.page === page) n.classList.add('active');
+    else n.classList.remove('active');
+  });
+}
+
+// ── Events ──
+let eventCount = 4;
+function addEvent() {
+  eventCount++;
+  const tbody = document.getElementById('events-body');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>New Event ${eventCount}</td><td>TBD</td><td>Riyadh</td><td>0</td><td>—</td><td>0</td><td><span class="badge badge-gray">Draft</span></td><td><button class="btn btn-ghost btn-sm">Detail</button></td>`;
+  tbody.appendChild(tr);
+}
+function showEventDetail(name, date, location, guests, budget, vendors, status) {
+  const card = document.getElementById('event-detail-card');
+  document.getElementById('event-detail-title').textContent = name + ' — Detail View';
+  document.getElementById('event-detail-stats').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Date</div><div class="stat-val" style="font-size:16px">${date}, 2026</div></div>
+    <div class="stat-card"><div class="stat-label">Location</div><div class="stat-val" style="font-size:16px">${location}</div></div>
+    <div class="stat-card"><div class="stat-label">Guests Registered</div><div class="stat-val">${guests}</div></div>
+    <div class="stat-card"><div class="stat-label">Vendors Confirmed</div><div class="stat-val">${vendors}</div></div>
+    <div class="stat-card"><div class="stat-label">Budget (SAR)</div><div class="stat-val" style="font-size:16px">${budget.toLocaleString()}</div></div>
+    <div class="stat-card"><div class="stat-label">Status</div><div style="margin-top:8px"><span class="badge ${status==='Active'?'badge-green':status==='Setup'?'badge-yellow':status==='Planning'?'badge-blue':'badge-gray'}">${status}</span></div></div>
+  `;
+  card.style.display = 'block';
+}
+
+// ── stagePay Workflow ──
+const steps = [
+  { title:'Contract Signed', desc:'PO #2026-0412 accepted — SAR 142,000 for Safira Evening catering', time:'Completed · May 24, 09:14 AM', state:'done' },
+  { title:'Vendor Opted into stagePay', desc:'Al-Nour Catering requested 60% advance = SAR 85,200', time:'Completed · May 24, 09:31 AM', state:'done' },
+  { title:'AI Validation', desc:'Checking: contract authenticity · buyer credibility · risk score · vendor profile', time:'Running...', state:'active' },
+  { title:'Route to Nylon Finance', desc:'Validated packet sent to licensed financing partner', time:'Pending', state:'pending' },
+  { title:'Approval Workflow', desc:'Finance Agent routes to authorised human approver', time:'Pending', state:'pending' },
+  { title:'Vendor Receives Advance', desc:'SAR 85,200 disbursed within 30 minutes of approval', time:'Pending', state:'pending' },
+  { title:'Buyer Settlement', desc:'Safira Events settles SAR 142,000 with Nylon Finance post-event', time:'Pending', state:'pending' },
+  { title:'Records Auto-Updated', desc:'stageOS syncs all operational and financial records automatically', time:'Pending', state:'pending' },
+];
+let currentStep = 2;
+
+function renderSteps() {
+  const container = document.getElementById('steps-container');
+  container.innerHTML = steps.map((s, i) => `
+    <div class="workflow-step">
+      <div class="step-num ${s.state === 'done' ? 'step-done' : s.state === 'active' ? 'step-active pulse' : 'step-pending'}" id="snum-${i}">
+        ${s.state === 'done' ? '✓' : i + 1}
+      </div>
+      <div class="step-content">
+        <div class="step-title">${s.title}</div>
+        <div class="step-desc" id="sdesc-${i}">${s.desc}</div>
+        <div class="step-time" id="stime-${i}">${s.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+const stepAdvances = [
+  null, null,
+  () => {
+    document.getElementById('val-risk').textContent = '✓ Low (Score: 78)';
+    document.getElementById('val-risk').style.color = '#F0B429';
+    document.getElementById('val-vendor').textContent = '✓ Acceptable (67/100)';
+    document.getElementById('val-vendor').style.color = '#F0B429';
+    document.getElementById('ai-verdict').style.display = 'block';
+    document.getElementById('sdesc-2').textContent = 'All checks passed · Risk: 78 · Buyer: 91 · Profile: 67';
+    document.getElementById('stime-2').textContent = 'Completed · ' + new Date().toLocaleTimeString();
+  },
+  () => { document.getElementById('sdesc-3').textContent = 'Validated packet delivered to Nylon Finance API · Reference: NF-20260526'; document.getElementById('stime-3').textContent = 'Completed · ' + new Date().toLocaleTimeString(); },
+  () => { document.getElementById('sdesc-4').textContent = 'Routed to Finance Director · Awaiting digital signature'; document.getElementById('stime-4').textContent = 'In queue · Est. 8 minutes'; },
+  () => { document.getElementById('sdesc-5').textContent = 'SAR 85,200 disbursed to Al-Nour Catering bank account ✓'; document.getElementById('stime-5').textContent = 'Disbursed · ' + new Date().toLocaleTimeString(); },
+  () => { document.getElementById('sdesc-6').textContent = 'Scheduled: Safira Events to settle SAR 142,000 on Jun 13, 2026'; document.getElementById('stime-6').textContent = 'Scheduled post-event'; },
+  () => { document.getElementById('sdesc-7').textContent = 'All records synced · Invoice closed · Vendor score updated'; document.getElementById('stime-7').textContent = 'Auto-completed · ' + new Date().toLocaleTimeString(); },
+];
+
+function advanceStep() {
+  if (currentStep >= steps.length) return;
+  steps[currentStep].state = 'done';
+  steps[currentStep].time = 'Completed';
+  if (currentStep + 1 < steps.length) {
+    steps[currentStep + 1].state = 'active';
+  }
+  if (stepAdvances[currentStep]) stepAdvances[currentStep]();
+  currentStep++;
+  renderSteps();
+  if (currentStep >= steps.length) {
+    const btn = document.getElementById('step-btn');
+    btn.textContent = '✓ Complete';
+    btn.disabled = true;
+  }
+}
+
+renderSteps();
+
+// ── Approvals ──
+function doApprove(rowId, label) {
+  const row = document.getElementById(rowId);
+  row.style.opacity = '0.4';
+  row.querySelectorAll('button').forEach(b => b.disabled = true);
+  addLog('✓ APPROVED: ' + label, 'ok');
+}
+function doReject(rowId, label) {
+  const row = document.getElementById(rowId);
+  row.style.opacity = '0.4';
+  row.querySelectorAll('button').forEach(b => b.disabled = true);
+  addLog('✗ REJECTED: ' + label, 'err');
+}
+function addLog(msg, type) {
+  const log = document.getElementById('audit-log');
+  if (log.querySelector('div[style*="italic"]')) log.innerHTML = '';
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.textContent = `[${new Date().toLocaleTimeString()}]  ${msg}`;
+  log.prepend(entry);
+}
+</script>
+</body>
+</html>
