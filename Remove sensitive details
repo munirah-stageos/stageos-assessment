@@ -188,7 +188,7 @@
 
     <div class="sidebar-footer">
       stageOS · KSA Region · v1.0<br>
-      Built: May 2026 — Munirah Assessment
+      Built: May 2026 — Candidate Assessment
     </div>
   </nav>
 
@@ -200,7 +200,7 @@
       <div class="topbar">
         <div>
           <div class="page-title">Operations Dashboard</div>
-          <div class="page-sub">Live overview · KSA Region · May 26, 2026</div>
+          <div class="page-sub">Live overview · KSA Region · 2026</div>
         </div>
         <button class="btn btn-primary btn-sm" onclick="goPage('events')">+ New Event</button>
       </div>
@@ -436,7 +436,7 @@
               <div class="finance-row"><span>Advance Request (60%)</span><span class="finance-total">SAR 85,200</span></div>
               <div class="finance-row"><span>Financing Fee (Nylon)</span><span>2.4% flat</span></div>
               <div class="finance-row"><span>Disbursement ETA</span><span>~22 minutes</span></div>
-              <div class="finance-row"><span>Buyer Settlement</span><span>Post-event (Jun 13)</span></div>
+              <div class="finance-row"><span>Buyer Settlement</span><span>Post-event</span></div>
               <div class="finance-row"><span>Financing Partner</span><span>Nylon Finance (Licensed)</span></div>
             </div>
           </div>
@@ -902,10 +902,10 @@ const stepAdvances = [
     document.getElementById('sdesc-2').textContent = 'All checks passed · Risk: 78 · Buyer: 91 · Profile: 67';
     document.getElementById('stime-2').textContent = 'Completed · ' + new Date().toLocaleTimeString();
   },
-  () => { document.getElementById('sdesc-3').textContent = 'Validated packet delivered to Nylon Finance API · Reference: NF-20260526'; document.getElementById('stime-3').textContent = 'Completed · ' + new Date().toLocaleTimeString(); },
+  () => { document.getElementById('sdesc-3').textContent = 'Validated packet delivered to Nylon Finance API · Reference: confirmed'; document.getElementById('stime-3').textContent = 'Completed · ' + new Date().toLocaleTimeString(); },
   () => { document.getElementById('sdesc-4').textContent = 'Routed to Finance Director · Awaiting digital signature'; document.getElementById('stime-4').textContent = 'In queue · Est. 8 minutes'; },
   () => { document.getElementById('sdesc-5').textContent = 'SAR 85,200 disbursed to Al-Nour Catering bank account ✓'; document.getElementById('stime-5').textContent = 'Disbursed · ' + new Date().toLocaleTimeString(); },
-  () => { document.getElementById('sdesc-6').textContent = 'Scheduled: Safira Events to settle SAR 142,000 on Jun 13, 2026'; document.getElementById('stime-6').textContent = 'Scheduled post-event'; },
+  () => { document.getElementById('sdesc-6').textContent = 'Scheduled: Safira Events to settle SAR 142,000 with Nylon Finance post-event'; document.getElementById('stime-6').textContent = 'Scheduled post-event'; },
   () => { document.getElementById('sdesc-7').textContent = 'All records synced · Invoice closed · Vendor score updated'; document.getElementById('stime-7').textContent = 'Auto-completed · ' + new Date().toLocaleTimeString(); },
 ];
 
